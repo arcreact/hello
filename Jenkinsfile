@@ -7,9 +7,9 @@ pipeline {
         EMAIL_RECIPIENTS = 'xxyy@gmail.com'
     }
     tools {
-        jdk "jdk-10.0.2"
+        jdk "java 10.0.2"
         
-        maven "mvn3.5.4"
+        maven "maven3.5.4"
     }   
     stages {
 
