@@ -15,7 +15,7 @@ node {
   stage 'Build'
   // Run the maven build this is a release that keeps the development version 
   // unchanged and uses Jenkins to provide the version number uniqueness
-  def cmd = sh "${mvnHome}/bin/mvn -DreleaseVersion=${version} -DdevelopmentVersion=${pom.version} -DpushChanges=false -DlocalCheckout=true -DpreparationGoals=initialize release:prepare release:perform -B"
+  def cmd = sh "${mvnHome}/bin/mvn clean package"
   // Now we have a step to decide if we should publish to Environment
   // (we just use a simple publish step here)
   input 'Publish?'
