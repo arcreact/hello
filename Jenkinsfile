@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import groovy.util.*
 node {
   // Mark the code checkout 'stage'....
   stage 'Checkout'
@@ -14,13 +15,13 @@ node {
   def pom = readMavenPom file: 'pom.xml'
   def version = pom.version.replace("-SNAPSHOT", ".${currentBuild.number}")
   // Mark the code build 'stage'....
-  stage ('Build'){
+  stage ('Build')
     withEnv(['PATH+EXTRA=/usr/sbin:/usr/bin:/sbin:/bin'])
   
   // Run the maven build this is a release that keeps the development version 
   // unchanged and uses Jenkins to provide the version number uniqueness
   def cmd = sh "${mvnHome}/bin/mvn clean package"
-  }
+  
   // Now we have a step to decide if we should publish to Environment
   // (we just use a simple publish step here)
   input 'Publish?'
