@@ -1,5 +1,4 @@
 
-
 import groovy.json.JsonSlurper
 def Environments
 def versions
@@ -76,5 +75,6 @@ agent any
         }
     }
 }
-       
         }
+    }
+}
