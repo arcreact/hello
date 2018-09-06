@@ -16,10 +16,11 @@ node {
   // Mark the code build 'stage'....
   stage ('Build'){
     withEnv(['PATH+EXTRA=/usr/sbin:/usr/bin:/sbin:/bin'])
-    
+  
   // Run the maven build this is a release that keeps the development version 
   // unchanged and uses Jenkins to provide the version number uniqueness
   def cmd = sh "${mvnHome}/bin/mvn clean package"
+  }
   // Now we have a step to decide if we should publish to Environment
   // (we just use a simple publish step here)
   input 'Publish?'
@@ -32,4 +33,4 @@ node {
   //details of the staging repository identifier it would be easy
  
 }
-}
+
