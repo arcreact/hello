@@ -3,4 +3,11 @@
   <groupId>test</groupId>
   <artifactId>work</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+  
+  </properties>
+  <scm>
+    <connection>scm:git:https://https://github.com/arcreact/hello</connection>
+    <developerConnection>scm:git:https://github.com/arcreact/hello</developerConnection>
+  </scm>
+
 </project>
