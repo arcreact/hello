@@ -1,37 +1,79 @@
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import groovy.util.*
+
+#!/usr/bin/env groovy
+import groovy.json.JsonSlurper
+def Environments
+def versions
+def recurse 
+
 node {
-  // Mark the code checkout 'stage'....
-  stage 'Checkout'
-  // Get some code from a GitHub repository
- 
-  git url: 'https://github.com/arcreact/hello.git'
-  // Clean any locally modified files and ensure we are actually on origin/master
-  // as a failed release could leave the local workspace ahead of origin/master
-  
-  def mvnHome = tool 'maven3.5.4'
-  // we want to pick up the version from the pom
-  def pom = readMavenPom file: 'pom.xml'
-  def version = pom.version.replace("-SNAPSHOT", ".${currentBuild.number}")
-  // Mark the code build 'stage'....
-  stage ('Build')
-    withEnv(['PATH+EXTRA=/usr/sbin:/usr/bin:/sbin:/bin'])
-  
-  // Run the maven build this is a release that keeps the development version 
-  // unchanged and uses Jenkins to provide the version number uniqueness
-  def cmd = sh "${mvnHome}/bin/mvn clean package"
-  
-  // Now we have a step to decide if we should publish to Environment
-  // (we just use a simple publish step here)
-  input 'Publish?'
-  stage 'Publish'
-  // push the tags (alternatively we could have pushed them to a separate
-  // git repo that we then pull from and repush... the latter can be 
-  // helpful in the case where you run the publish on a different node
-  sh "git push ${pom.artifactId}-${version}"
-  // we should also release the staging repo, if we had stashed the 
-  //details of the staging repository identifier it would be easy
- 
+    dir('/home/workspace') {
+        nodes = sh (script: 'sh list_nodes.sh', returnStdout: true).trim()
+    }
 }
 
+pipeline {
+agent any
+    parameters {
+            choice(name: 'Invoke_Parameters', choices:"Yes\nNo", description: "Do you whish to do a dry run to grab parameters?" )
+            choice(name: 'Environments', choices:"${Environments}", description: "")
+    }
+    stages {
+        stage("parameterizing") {
+            steps {
+                script {
+                    if ("${params.Invoke_Parameters}" == "Yes") {
+                        currentBuild.result = 'ABORTED'
+                        error('DRY RUN COMPLETED. JOB PARAMETERIZED.')
+                    }
+                }
+            }
+        }
+        stage("choose version") {
+            steps {
+                script  
+                 {
+                        
+                        def versionArraySort = { a1, a2 -> 
+                            def headCompare = a1[0] <=> a2[0] 
+                            if (a1.size() == 1 || a2.size() == 1 || headCompare != 0) { 
+                                return headCompare 
+                            } else { 
+                                return recurse(a1[1..-1], a2[1..-1]) 
+                            } 
+                        } 
+                        // Making Groovy to understand recursive closure 
+                        recurse = versionArraySort
+                        def versionStringSort = { s1, s2 -> 
+                            def nums = { it.tokenize('.').collect{ it.toInteger() } } 
+                            versionArraySort(nums(s1), nums(s2)) 
+                        }
+                        try {
+                            List<String> artifacts = new ArrayList<String>()
+                            def artifactsUrl = "nexus-url"
+                            def artifactsObjectRaw = ["curl", "-s", "-H", "accept: application/json", "-k", "--url", "${artifactsUrl}"].execute().text
+                            def jsonSlurper = new JsonSlurper()
+                            def artifactsJsonObject = jsonSlurper.parseText(artifactsObjectRaw)
+                            def dataArray = artifactsJsonObject.data
+                            for(item in dataArray){
+                                if (item.isMetadata == false)
+                                artifacts.add(item.text)
+                            } 
+                            return artifacts.sort(versionStringSort).reverse()
+                        } catch (Exception e) {
+                            print "There was a problem fetching the artifacts" + e
+                        }
+
+        stage("build") {
+            steps {
+                script {
+                    build(job: "builder-job",
+                        parameters:
+                        [string(name: 'Environments', value: "${params.Environments}"),
+                        string(name: 'Versions', value: "${versions}"),
+                        ])
+                }
+            }
+        }
+    }
+}
+        
