@@ -23,7 +23,7 @@ node {
   // push the tags (alternatively we could have pushed them to a separate
   // git repo that we then pull from and repush... the latter can be 
   // helpful in the case where you run the publish on a different node
-  def cmd = sh "git push ${pom.artifactId}-${version}"
+  sh "git push ${pom.artifactId}-${version}"
   // we should also release the staging repo, if we had stashed the 
   //details of the staging repository identifier it would be easy
  
