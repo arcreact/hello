@@ -26,13 +26,13 @@ pipeline {
                         developmentArtifactVersion = "${pom.version}-${targetVersion}"
                         print pom.version
                         // execute the unit testing and collect the reports
-                        junit '**//*target/surefire-reports/TEST-*.xml'
+                       
                         archive 'target*//*.jar'
                     } else {
                         bat(/"${mvnHome}\bin\mvn" -Dintegration-tests.skip=true clean package/)
                         def pom = readMavenPom file: 'pom.xml'
                         print pom.version
-                        junit '**//*target/surefire-reports/TEST-*.xml'
+                       
                         archive 'target*//*.jar'
                     }
                 }
@@ -68,24 +68,7 @@ pipeline {
                 }
             }
         }
-        stage('DEV sanity check') {
-            steps {
-                // give some time till the deployment is done, so we wait 45 seconds
-                sleep(45)
-                script {
-                    if (currentBuild.result == null || currentBuild.result == 'SUCCESS') {
-                        timeout(time: 1, unit: 'MINUTES') {
-                            script {
-                                def mvnHome = tool 'Maven 3.5.4'
-                                //NOTE : if u change the sanity test class name , change it here as well
-                                sh "'${mvnHome}/bin/mvn' -Dtest=ApplicationSanityCheck_ITT surefire:test"
-                            }
-
-                        }
-                    }
-                }
-            }
-        }
+        
         stage('Release and publish artifact') {
             when {
                 // check if branch is master
@@ -146,29 +129,7 @@ pipeline {
                 }
             }
         }
-        stage('E2E tests') {
-            when {
-                // check if branch is master
-                branch 'master'
-            }
-            steps {
-                // give some time till the deployment is done, so we wait 45 seconds
-                sleep(45)
-                script {
-                    if (currentBuild.result == null || currentBuild.result == 'SUCCESS') {
-                        timeout(time: 1, unit: 'MINUTES') {
-
-                            script {
-                                def mvnHome = tool 'Maven 3.5.4'
-                                // NOTE : if you change the test class name change it here as well
-                                sh "'${mvnHome}/bin/mvn' -Dtest=ApplicationE2E surefire:test"
-                            }
-
-                        }
-                    }
-                }
-            }
-        }
+        
     }
     
 
