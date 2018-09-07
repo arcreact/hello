@@ -13,8 +13,8 @@
         <version>3.1</version>
         <configuration>
           <fork>true</fork>
-          <maven.compiler.source>1.8</maven.compiler.source>
-          <maven.compiler.target>1.8</maven.compiler.target>
+          <source>1.8</source>
+          <target>1.8</target>
           <executable>C:\Program Files\Java\jdk-10.0.2</executable>
         </configuration>
     
@@ -46,7 +46,7 @@
   	<dependency>
   		<groupId>javax.servlet</groupId>
   		<artifactId>javax.servlet-api</artifactId>
-  		<version>3.0.1</version>
+  		<version>3.1</version>
   	</dependency>
   </dependencies>
 </project>
