@@ -33,7 +33,7 @@
         </repository>
         <snapshotRepository>
             <id>nexus</id>
-            <name>Snapshot</name>
+            <name>sample-snap</name>
             <url>http://localhost:8081/repository/sample-snap/</url>
         </snapshotRepository>
     </distributionManagement>
