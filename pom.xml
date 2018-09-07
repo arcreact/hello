@@ -12,7 +12,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.7.0</version>
         <configuration>
-       
+          <fork>true</fork>
           <source>1.8</source>
           <target>1.8</target>
           <executable>C:\Program Files\Java\jdk-10.0.2</executable>
