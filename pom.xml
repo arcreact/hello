@@ -8,15 +8,21 @@
     <sourceDirectory>src</sourceDirectory>
     <plugins>
       <plugin>
+        <execution>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.7.0</version>
+          <goals>
+            <goal>clean compile package deploy</goals>
+           <goals>
         <configuration>
           <fork>true</fork>
           <source>1.8</source>
           <target>1.8</target>
           <executable>C:\Program Files\Java\jdk-10.0.2</executable>
         </configuration>
+             </execution>
+            <execution>
     
     
       </plugin>
