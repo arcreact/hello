@@ -11,9 +11,10 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.1</version>
         <configuration>
-         
+          <fork>true</fork>
           <maven.compiler.source>1.8</maven.compiler.source>
           <maven.compiler.target>1.8</maven.compiler.target>
+          <executable>C:\Program Files\Java\jdk-10.0.2</executable>
         </configuration>
     
     
