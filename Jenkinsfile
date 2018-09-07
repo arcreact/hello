@@ -1,195 +1,233 @@
-import com.fairstone.Utils
-import com.fairstone.AWSUtils
+pipeline {
+    // run on jenkins nodes tha has java 8 label
+    agent any
+    // global env variables
+    environment {
+        EMAIL_RECIPIENTS = 'xxyy@gmail.com'
+    }
+    stages {
 
-def call(body) {
-    def config = [:]
-    body.resolveStrategy = Closure.DELEGATE_FIRST
-    body.delegate = config
-    body()
-
-    def linuxAgent = "slaves"
-    def ssisBuildAgent = "ssis-build"
-
-    def ssisClientVersion = config.ssisClientVersion ?: "ssis-client 0.10.0"
-    def usedJdk = config.jdk ?: "ibm-jdk8"
-    def usedMavenSettings = config.mavenSettings ?: "fairstone-maven-settings"
-    def usedMaven = config.maven ?: "maven-3.5"
-    def deploy = config.deploy ?: false
-    def ssisArtifact = config.ssisArtifact ?: ""
-    def ssisConfigVersion = config.ssisConfigVersion ?: "1.0"
-    def mailTo = config.mailTo ?: com.fairstone.Utils.DEFAULT_MAIL_TO_BUILD
-    def unitTests = config.unitTests ?: false
-
-    def featurePattern = java.util.regex.Pattern.compile("(origin/)?feature/(.*)")
-    def developPattern = java.util.regex.Pattern.compile("(origin/)?develop")
-
-    def customVersion = currentBuild.startTimeInMillis.toString()
-
-    properties(
-        [
-            buildDiscarder(logRotator(numToKeepStr: '15')),
-            pipelineTriggers([pollSCM('*/5 * * * *')]),
-        ]
-    )
-    def pom = null
-
-    try
-    {
-        timeout(time: 25, unit: 'MINUTES') {
-
-            def pipeline = [:]
-            
-            if(ssisArtifact != ""){
-                pipeline['SSIS'] = {
-                    node (ssisBuildAgent){
-                        stage('git clone') {
-                            deleteDir()
-                            checkout([
-                                    $class           : 'GitSCM',
-                                    branches         : scm.branches,
-                                    extensions       : scm.extensions + [[$class: 'CleanCheckout'], [$class: 'LocalBranch']],
-                                    userRemoteConfigs: scm.userRemoteConfigs
-                            ])
-                        }
-                        stage('ssis build') {
-                            script {
-                                def lpom = readMavenPom file: 'pom.xml'
-                                def groupID = config.groupID ?: "com.fairstone"
-                                def ssisClient = "${tool ssisClientVersion}"
-                                def cmd = "${ssisClient}\\Build\\All.ps1 -groupID ${groupID} -artifactID ${ssisArtifact} -version ${lpom.version} -customVersion ${customVersion}"
-                                if (!featurePattern.matcher(env.BRANCH_NAME).matches()){
-                                    cmd = cmd + " -Deploy"
-                                }
-                                bat 'powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -Command "' + cmd + '"'
-
-                            }
-                        }
+        stage('Build with unit testing') {
+            steps {
+                // Run the maven build
+                script {
+                    // Get the Maven tool.
+                    // ** NOTE: This 'M3' Maven tool must be configured
+                    // **       in the global configuration.
+                    echo 'Pulling...' + env.BRANCH_NAME
+                    def mvnHome = tool 'Maven 3.5.4'
+                    if (isUnix()) {
+                        def targetVersion = getDevVersion()
+                        print 'target build version...'
+                        print targetVersion
+                        sh "'${mvnHome}/bin/mvn' -Dintegration-tests.skip=true -Dbuild.number=${targetVersion} clean package"
+                        def pom = readMavenPom file: 'pom.xml'
+                        // get the current development version 
+                        developmentArtifactVersion = "${pom.version}-${targetVersion}"
+                        print pom.version
+                        // execute the unit testing and collect the reports
+                        junit '**//*target/surefire-reports/TEST-*.xml'
+                        archive 'target*//*.jar'
+                    } else {
+                        bat(/"${mvnHome}\bin\mvn" -Dintegration-tests.skip=true clean package/)
+                        def pom = readMavenPom file: 'pom.xml'
+                        print pom.version
+                        junit '**//*target/surefire-reports/TEST-*.xml'
+                        archive 'target*//*.jar'
                     }
                 }
-            }
-            pipeline['Maven'] = {
-                node (linuxAgent) {
 
-                    stage('git clone') {
-                        deleteDir()
-                        checkout([
-                                $class           : 'GitSCM',
-                                branches         : scm.branches,
-                                extensions       : scm.extensions + [[$class: 'CleanCheckout'], [$class: 'LocalBranch']],
-                                userRemoteConfigs: scm.userRemoteConfigs
-                        ])
-                        script {
-                                pom = readMavenPom file: 'pom.xml'
-                                VERSION = pom.version.update('SNAPSHOT', BUILDNUMBER + "." + SHORTREV)
-                        }
-                    }
-
-                    stage('mvn verify') {
-                        echo "============== ${env.BRANCH_NAME} ================"
-
-                        withMaven(
-                                maven: usedMaven,
-                                jdk: usedJdk,
-                                mavenSettingsConfig: usedMavenSettings) {
-                            script {
-                                if (unitTests) {
-                                    sh "mvn clean test -U"
-                                } else {
-                                    sh "mvn clean verify -U"
-                                }
-                            }
-                        }
-                    }
-
-                    if(!featurePattern.matcher(env.BRANCH_NAME).matches()) {
-                        //If Feature => no publish in nexus no deploy
-                        stage('publish nexus java') {                            
-                            withMaven(
-                                    maven: usedMaven,
-                                    jdk: usedJdk,
-                                    mavenSettingsConfig: usedMavenSettings) {
-
-                                sh "mvn clean deploy -U"
-                            }
-                        }
-                    }
-                }
-            }
-            parallel pipeline
-
-            if(deploy && developPattern.matcher(env.BRANCH_NAME).matches()) {
-                stage('deploy in development') {
-                    script {
-                        def groupID = config.groupID ?: "com.fairstone"
-                        def jobDeploy = config.jobDeploy ?: "../dist-apps-java-pipeline-deploy-job/deployment-java-dists-app"
-                        def artifactID = config.artifactID ?: pom.artifactId
-                        def packaging = config.packaging ?: pom.packaging
-                        def deployment = config.deployment ?: ""
-                        def environment = config.environment ?: Utils.ENVIRONMENT_DEV
-                        def stack = config.stack ?: AWSUtils.DEFAULT_STACK
-                        def stackId = config.stackId ?: AWSUtils.DEFAULT_STACK_ID
-
-                        echo "Deploy in environment"
-                        build job: jobDeploy, wait: false,
-                                parameters: [[$class: 'StringParameterValue', name: 'groupID', value: groupID, description: 'The groupID of artifact'],
-                                                [$class: 'StringParameterValue', name: 'artifactID', value: artifactID, description: 'The artifactID of artifact'],
-                                                [$class: 'StringParameterValue', name: 'packaging', value: packaging, description: 'The packaging of artifact'],
-                                                [$class: 'StringParameterValue', name: 'version', value: pom.version, description: 'The version of artifact'],
-                                                [$class: 'StringParameterValue', name: 'deployment', value: deployment, description: 'The information of deployment'],
-                                                [$class: 'StringParameterValue', name: 'environment', value: environment, description: 'The environment'],
-                                                [$class: 'StringParameterValue', name: 'stack', value: stack, description: 'The kind of stack'],
-                                                [$class: 'StringParameterValue', name: 'stackId', value: stackId, description: 'The stack id'],
-                                                [$class: 'StringParameterValue', name: 'mailTo', value: mailTo, description: 'The mail to']]
-                        if (ssisArtifact != "") {
-                            def jobDeploySsis = config.jobDeploySsis ?: "../dist-apps-java-pipeline-deploy-job/deployment-ssis"
-                            build job: jobDeploySsis, wait: false,
-                                    parameters: [[$class: 'StringParameterValue', name: 'groupID', value: groupID, description: 'The groupID of artifact'],
-                                                    [$class: 'StringParameterValue', name: 'artifactID', value: ssisArtifact, description: 'The artifactID of artifact'],
-                                                    [$class: 'StringParameterValue', name: 'version', value: pom.version, description: 'The version of artifact'],
-                                                    [$class: 'StringParameterValue', name: 'customVersion', value: customVersion, description: 'The custom version'],
-                                                    [$class: 'StringParameterValue', name: 'ssisConfigVersion', value: ssisConfigVersion, description: 'The configuration version'],
-                                                    [$class: 'StringParameterValue', name: 'environment', value: environment, description: 'The environment'],
-                                                    [$class: 'StringParameterValue', name: 'stackId', value: stackId, description: 'The stack id'],
-                                                    [$class: 'StringParameterValue', name: 'mailTo', value: mailTo, description: 'The mail to']]
-                        }
-                    }
-                }
             }
         }
-    }
-    catch (Exception e) {
-        currentBuild.result = 'FAILURE'
-        throw e
-    }
-    finally{
-        stage('Cleanup'){
-
-            if(ssisArtifact != ""){
-                node (ssisBuildAgent){
-                    deleteDir()
-                }
-            }
-            node (linuxAgent){
-                deleteDir()
-            }
-            
-            mail to: mailTo,
-                    subject: "[FAIRSTONE-JENKINS][BUILD][${currentBuild.currentResult}] - ${currentBuild.fullDisplayName}",
-                    body: """
-                    Informations:
-                    <ul>
-                        <li><a href=\"${env.BUILD_URL}\">Job</a></li>
-                        <li>Status  <b>${currentBuild.currentResult}</b></li>
-                        <li>Display Name  <b>${currentBuild.displayName}</b></li>
-                        <li>Job Name <b>${env.JOB_NAME}</b></li>
-                        <li>Build Number <b>${env.BUILD_NUMBER}</b></li>
-                        <li>Git branch <b>${env.GIT_BRANCH}</b></li>
-                        <li>Git commit <b>${env.GIT_COMMIT}</b></li>
-                        <li>Duration ${currentBuild.durationString}</li>
-                    </ul>
-                    """,
-                    mimeType: "text/html"
         
+        
+        stage('Development deploy approval and deployment') {
+            steps {
+                script {
+                    if (currentBuild.result == null || currentBuild.result == 'SUCCESS') {
+                        timeout(time: 3, unit: 'MINUTES') {
+                            // you can use the commented line if u have specific user group who CAN ONLY approve
+                            //input message:'Approve deployment?', submitter: 'it-ops'
+                            input message: 'Approve deployment?'
+                        }
+                        timeout(time: 2, unit: 'MINUTES') {
+                            //
+                            if (developmentArtifactVersion != null && !developmentArtifactVersion.isEmpty()) {
+                                // replace it with your application name or make it easily loaded from pom.xml
+                                def jarName = "application-${developmentArtifactVersion}.jar"
+                                echo "the application is deploying ${jarName}"
+                                // NOTE : CREATE your deployemnt JOB, where it can take parameters whoch is the jar name to fetch from jenkins workspace
+                                build job: 'ApplicationToDev', parameters: [[$class: 'StringParameterValue', name: 'jarName', value: jarName]]
+                                echo 'the application is deployed !'
+                            } else {
+                                error 'the application is not  deployed as development version is null!'
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+        stage('DEV sanity check') {
+            steps {
+                // give some time till the deployment is done, so we wait 45 seconds
+                sleep(45)
+                script {
+                    if (currentBuild.result == null || currentBuild.result == 'SUCCESS') {
+                        timeout(time: 1, unit: 'MINUTES') {
+                            script {
+                                def mvnHome = tool 'Maven 3.5.4'
+                                //NOTE : if u change the sanity test class name , change it here as well
+                                sh "'${mvnHome}/bin/mvn' -Dtest=ApplicationSanityCheck_ITT surefire:test"
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+        stage('Release and publish artifact') {
+            when {
+                // check if branch is master
+                branch 'master'
+            }
+            steps {
+                // create the release version then create a tage with it , then push to nexus releases the released jar
+                script {
+                    def mvnHome = tool 'Maven 3.5.4' //
+                    if (currentBuild.result == null || currentBuild.result == 'SUCCESS') {
+                        def v = getReleaseVersion()
+                        releasedVersion = v;
+                        if (v) {
+                            echo "Building version ${v} - so released version is ${releasedVersion}"
+                        }
+                        // jenkins user credentials ID which is transparent to the user and password change
+                        sshagent(['0000000-3b5a-454e-a8e6-c6b6114d36000']) {
+                            sh "git tag -f v${v}"
+                            sh "git push -f --tags"
+                        }
+                        sh "'${mvnHome}/bin/mvn' -Dmaven.test.skip=true  versions:set  -DgenerateBackupPoms=false -DnewVersion=${v}"
+                        sh "'${mvnHome}/bin/mvn' -Dmaven.test.skip=true clean deploy"
+
+                    } else {
+                        error "Release is not possible. as build is not successful"
+                    }
+                }
+            }
+        }
+        stage('Deploy to staging') {
+            when {
+                // check if branch is master
+                branch 'master'
+            }
+            steps {
+                script {
+                    if (currentBuild.result == null || currentBuild.result == 'SUCCESS') {
+                        timeout(time: 3, unit: 'MINUTES') {
+                            //input message:'Approve deployment?', submitter: 'it-ops'
+                            input message: 'Approve deployment to UAT?'
+                        }
+                        timeout(time: 3, unit: 'MINUTES') {
+                            //  deployment job which will take the relasesed version
+                            if (releasedVersion != null && !releasedVersion.isEmpty()) {
+                                // make the applciation name for the jar configurable
+                                def jarName = "application-${releasedVersion}.jar"
+                                echo "the application is deploying ${jarName}"
+                                // NOTE : DO NOT FORGET to create your UAT deployment jar , check Job AlertManagerToUAT in Jenkins for reference
+                                // the deployemnt should be based into Nexus repo
+                                build job: 'AApplicationToACC', parameters: [[$class: 'StringParameterValue', name: 'jarName', value: jarName], [$class: 'StringParameterValue', name: 'appVersion', value: releasedVersion]]
+                                echo 'the application is deployed !'
+                            } else {
+                                error 'the application is not  deployed as released version is null!'
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+        stage('E2E tests') {
+            when {
+                // check if branch is master
+                branch 'master'
+            }
+            steps {
+                // give some time till the deployment is done, so we wait 45 seconds
+                sleep(45)
+                script {
+                    if (currentBuild.result == null || currentBuild.result == 'SUCCESS') {
+                        timeout(time: 1, unit: 'MINUTES') {
+
+                            script {
+                                def mvnHome = tool 'Maven 3.5.4'
+                                // NOTE : if you change the test class name change it here as well
+                                sh "'${mvnHome}/bin/mvn' -Dtest=ApplicationE2E surefire:test"
+                            }
+
+                        }
+                    }
+                }
+            }
         }
     }
+    
+
+
 }
+def developmentArtifactVersion = ''
+def releasedVersion = ''
+// get change log to be send over the mail
+@NonCPS
+def getChangeString() {
+    MAX_MSG_LEN = 100
+    def changeString = ""
+
+    echo "Gathering SCM changes"
+    def changeLogSets = currentBuild.changeSets
+    for (int i = 0; i < changeLogSets.size(); i++) {
+        def entries = changeLogSets[i].items
+        for (int j = 0; j < entries.length; j++) {
+            def entry = entries[j]
+            truncated_msg = entry.msg.take(MAX_MSG_LEN)
+            changeString += " - ${truncated_msg} [${entry.author}]\n"
+        }
+    }
+
+    if (!changeString) {
+        changeString = " - No new changes"
+    }
+    return changeString
+}
+
+def sendEmail(status) {
+    mail(
+            to: "$EMAIL_RECIPIENTS",
+            subject: "Build $BUILD_NUMBER - " + status + " (${currentBuild.fullDisplayName})",
+            body: "Changes:\n " + getChangeString() + "\n\n Check console output at: $BUILD_URL/console" + "\n")
+}
+
+def getDevVersion() {
+    def gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+    def versionNumber;
+    if (gitCommit == null) {
+        versionNumber = env.BUILD_NUMBER;
+    } else {
+        versionNumber = gitCommit.take(8);
+    }
+    print 'build  versions...'
+    print versionNumber
+    return versionNumber
+}
+
+def getReleaseVersion() {
+    def pom = readMavenPom file: 'pom.xml'
+    def gitCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+    def versionNumber;
+    if (gitCommit == null) {
+        versionNumber = env.BUILD_NUMBER;
+    } else {
+        versionNumber = gitCommit.take(8);
+    }
+    return pom.version.replace("-SNAPSHOT", ".${versionNumber}")
+}
+
