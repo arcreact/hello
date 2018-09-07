@@ -15,7 +15,7 @@ pipeline {
                     // ** NOTE: This 'M3' Maven tool must be configured
                     // **       in the global configuration.
                     echo 'Pulling...' + env.BRANCH_NAME
-                    def mvnHome = tool 'Maven 3.5.4'
+                    def mvnHome = tool 'maven3.5.4'
                     if (isUnix()) {
                         def targetVersion = getDevVersion()
                         print 'target build version...'
@@ -51,7 +51,7 @@ pipeline {
             steps {
                 // create the release version then create a tage with it , then push to nexus releases the released jar
                 script {
-                    def mvnHome = tool 'Maven 3.5.4' //
+                    def mvnHome = tool 'maven3.5.4' //
                     if (currentBuild.result == null || currentBuild.result == 'SUCCESS') {
                         def v = getReleaseVersion()
                         releasedVersion = v;
