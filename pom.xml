@@ -28,12 +28,10 @@
    <distributionManagement>
         <repository>
             <id>nexus</id>
-            <name>Releases</name>
             <url>http://localhost:8081/repository/sample-rel/</url>
         </repository>
         <snapshotRepository>
             <id>nexus</id>
-            <name>sample-snap</name>
             <url>http://localhost:8081/repository/sample-snap/</url>
         </snapshotRepository>
     </distributionManagement>
