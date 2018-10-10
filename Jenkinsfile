@@ -53,4 +53,4 @@ return ["unknown state"]
                  charset: 'UTF-8'
             deleteDir()
         }
-    }} // pipeline
+    }}}
