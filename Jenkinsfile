@@ -1,12 +1,13 @@
 pipeline {
     agent any
-    properties([parameters([[$class: 'ChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: 'please select the environment', filterLength: 1, filterable: false, name: 'Environment', randomName: 'choice-parameter-1253886185210161', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: false, script: 'return[\'error\']'], script: [classpath: [], sandbox: false, script: '''return[
+    properties([parameters([[$class: 'ChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: 'please select the environment', filterLength: 1, filterable: false, name: 'Environment', randomName: 'choice-parameter-1254271679168869', script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: true, script: 'return[\'error\']'], script: [classpath: [], sandbox: true, script: '''return[
 "\\n",
 \'Dev\',
 \'Int\',
 \'Stag\'
 ]
 ''']]]])])
+
 
     stages {
         stage('Prepare & Checkout') {
