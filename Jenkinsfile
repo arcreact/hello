@@ -2,8 +2,8 @@ pipeline {
     agent any
     options {
     buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '15')) } 
-    return [
-parameters([[$class: 'ChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: 'Please select the environment', filterLength: 1, filterable: false, name: 'Environment', randomName: 'choice-parameter-1289510349829711',
+    
+[$class: 'ChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: 'Please select the environment', filterLength: 1, filterable: false, name: 'Environment', randomName: 'choice-parameter-1289510349829711',
              script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: true, script: 'return[\'error\']'], 
 script: [classpath: [], sandbox: true, script: '''return[\'\',\'Dev\',\'Int\',\'Stag\']''']]],
             
@@ -21,10 +21,10 @@ return["current version", "Promote from Int"]
 return ["unknown state"]
 }
 '''
-]]]]
-)
+]]]
 
-]
+
+
 
     stages {
         stage('Prepare & Checkout') {
