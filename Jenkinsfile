@@ -7,16 +7,16 @@ pipeline {
 
 
 	parameters {
-		activeChoiceParam('environment'){
+		activeChoiceParam('environment')(
                         description('select your environment')
 			choiceType('PT_SINGLE_SELECT')
 			groovyscript {
 				script("return['Dev','Init','Prd']")
 				fallbackScript('return["error"]')
 			}
-		}
+		)
 		
-		activeChoiceParam ('version'){
+		activeChoiceParam ('version')(
 			description('select the version')
 			choiceType('PT_SINGLE_SELECT')
 			
@@ -31,7 +31,7 @@ pipeline {
 			}
 			referencedParameter('Environment')
 		
-	}
+	)
 	}
 			
 stages{
