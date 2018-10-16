@@ -7,27 +7,25 @@ pipeline {
 
 
 	parameters {
-		choice(
-			name: 'Environment',
-			choices: "\nDev\nInit\nPrd",
-			description: 'select the environment' )
-		activeChoiceReactiveReferenceParam(
-			name: 'version',
-			description: 'selct the version',
-			choiceType: 'PT_SINGLE_SELECT',
-			referencedParameter: 'Environment',
-			groovyscript :
-				script {
-					if (Environment.equals("Dev")){
-						return["current version"] }
-						       else if(Environment.equals("Init")){
-							       return["current version", "Promote from Dev"] }
-						       else if(Environment.equals("Prd"){
-							       return["current version","promote from Init"] } 
-							       )			 					       
-				
-		 
+		activeChoiceParam('Environment'){
+                        description('select your environment')
+			choiceType('PT_SINGLE_SELECT')
+			groovyscript {
+				script("return['DEV' , 'Init' ,'Prd']")
+				fallbackScript('return["error"]')
+			}
+		}
+		
+		activeChoiceParam ('version'){
+			description('select the version')
+			choiceType('PT_SINGLE_SELECT')
 			
+			groovyscript {
+				script ("if (Environment.equals("Dev")){return['current version'] } else if(Environment.equals("Init")){return['current version', 'Promote from Dev'] } else if(Environment.equals("Prd"){return['current version','promote from Init'] }") 
+				fallbackScript('return["error"]')
+			}
+			referencedParameter('Environmet')
+		
 	}
 			
 stages{
