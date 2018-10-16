@@ -23,6 +23,7 @@ pipeline {
 							       return["current version", "Promote from Dev"] }
 						       else if(Environment.equals("Prd"){
 							       return["current version","promote from Init"] }
+							       )
 							       else {
 								       return["unkonwn state"] }
 				 }
