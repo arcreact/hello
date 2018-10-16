@@ -35,7 +35,7 @@ def fileVersionParameter(){
 pipeline {
     agent any
     
-}
+
 stages{
         stage('Prepare & Checkout') {
             steps {
@@ -53,6 +53,7 @@ stages{
                 echo "** version2: ${VERSION} **"
             }
         }
+}
 
     post {
         always {
