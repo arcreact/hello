@@ -32,14 +32,5 @@ stages{
         }
 }
 
-    post {
-        always {
-            mail to: 'foo@example.com',
-                 subject: "SUCCESS: ${VERSION}",
-                 body: """<html><body><p>SUCCESS</p></body></html>""",
-                 mimeType: 'text/html',
-                 charset: 'UTF-8'
-            deleteDir()
-        }
-    }
+    
 }	
