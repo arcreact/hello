@@ -24,11 +24,10 @@ pipeline {
 						       else if(Environment.equals("Prd"){
 							       return["current version","promote from Init"] }
 							       )
-							       else {
-								       return["unkonwn state"] }
+							       
 				 }
 			 }
-			referencedParameter: 'Environment'	)		       
+			referencedParameter: 'Environment'			       
 			       
 							       
 				
