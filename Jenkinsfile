@@ -23,7 +23,7 @@ pipeline {
 						       else if(Environment.equals("Init")){
 							       return["current version", "Promote from Dev"] }
 						       else if(Environment.equals("Prd"){
-							       return["current version","promote from Init"] } }
+							       return["current version","promote from Init"] } 
 							       )			 					       
 				
 		 
