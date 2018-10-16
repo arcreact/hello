@@ -9,8 +9,8 @@ pipeline {
 	parameters {
 		activeChoiceParam('environment')(
                         description('select your environment')
-			ChoiceType('PT_SINGLE_SELECT')
-			groovyscript {
+			choiceType('PT_SINGLE_SELECT')
+			groovyScript {
 				script("return['Dev','Init','Prd']")
 				fallbackScript('return["error"]')
 			}
@@ -18,9 +18,9 @@ pipeline {
 		
 		activeChoiceParam ('version')(
 			description('select the version')
-			ChoiceType('PT_SINGLE_SELECT')
+			choiceType('PT_SINGLE_SELECT')
 			
-			groovyscript {
+			groovyScript {
 				script {
 					if (environment.equals("Dev")){return['current version'] } 
 					else if(environment.equals("Init")){return['current version', 'Promote from Dev'] } 
