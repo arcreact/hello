@@ -24,7 +24,7 @@ pipeline {
               referencedParameters: 'Environment', 
 			  script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: true, script: 'return [\'Script Error\']'], 
               script: [classpath: [], sandbox: true, 
-             script: 
+             script: '''
                     if (Environment.equals("Dev"))
 					{
                      return["current version"]
@@ -38,7 +38,7 @@ pipeline {
                     return["current version", "Promote from Int"]
                     }
 					 else {return ["unknown state"]
-                    }]
+                    }''']
                 ]]]
 
 
