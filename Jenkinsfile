@@ -24,7 +24,7 @@ pipeline {
 				script ("if (Environment.equals("DEV")){return['current version'] } else if(Environment.equals("Init")){return['current version', 'Promote from Dev'] } else if(Environment.equals("Prd"){return['current version', 'promote from Init'] }") 
 				fallbackScript('return["error"]')
 			}
-			referencedParameter('Environmet')
+			referencedParameter('Environment')
 		
 	}
 			
