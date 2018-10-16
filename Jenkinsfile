@@ -29,10 +29,10 @@ stages{
         if(environment.equals("Dev")){
             version = input( id: 'userInput', message: 'Select your choice', parameters: [ [choices: 'current', description: 'current version build only', name: 'J'] ])
         }
-	elseif(environment.equals("Int"){
+	else if(environment.equals("Int"){
             version = input( id: 'userInput', message: 'Select your choice', parameters: [ [choices: 'current\npromote from Dev', description: 'choose the requiredversion', name: 'S'] ])
         }
-        elseif(environment.equals("Prd"){
+        else if(environment.equals("Prd"){
             version = input( id: 'userInput', message: 'Select your choice', parameters: [ [choices: 'current\npromote from Int', description: 'choose the requiredversion', name: 'W'] ])
         }
         else{
