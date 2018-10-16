@@ -32,6 +32,7 @@ pipeline {
 			referencedParameter('Environment')
 		
 	}
+	}
 			
 stages{
         stage('Prepare & Checkout') {
