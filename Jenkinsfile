@@ -18,7 +18,7 @@ pipeline {
 			groovyscript {
 				script {
 					if (Environment.equals("Dev")){
-						return["current version] }
+						return["current version"] }
 						       else if(Environment.equals("Init")){
 							       return["current version", "Promote from Dev"] }
 						       else if(Environment.equals("Prd"){
