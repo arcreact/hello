@@ -21,9 +21,12 @@ pipeline {
 			choiceType('PT_SINGLE_SELECT')
 			
 			groovyscript {
-				script (
-					if (environment.equals("Dev")){return['current version'] } else if(environment.equals("Init")){return['current version', 'Promote from Dev'] } else if(environment.equals("Prd")){return['current version', 'promote from Init'] } else {return ['unknown'] }
-					) 
+				script ("
+					if (environment.equals("Dev")){return['current version'] } 
+					else if(environment.equals("Init")){return['current version', 'Promote from Dev'] } 
+					else if(environment.equals("Prd")){return['current version', 'Promote from Init'] } 
+					else {return ['unknown'] }
+					") 
 				fallbackScript('return["error"]')
 			}
 			referencedParameter('Environment')
