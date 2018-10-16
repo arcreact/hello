@@ -7,20 +7,20 @@ pipeline {
 
 
 	parameters {
-		activeChoiceParam('environment')(
-                        description: 'select your environment'
-			choiceType: 'RADIO'
-			groovyScript:
+		activeChoiceParam('environment'){
+                        description('select your environment')
+			choiceType('PT_SINGLE_SELECT')
+			groovyscript {
 				script("return['Dev','Init','Prd']")
 				fallbackScript('return["error"]')
-			
-		)
+			}
+		}
 		
-		activeChoiceParam ('version')(
-			description: 'select the version'
-			choiceType: 'RADIO'
+		activeChoiceParam ('version'){
+			description('select the version')
+			choiceType('PT_SINGLE_SELECT')
 			
-			groovyScript:
+			groovyscript {
 				script {
 					if (environment.equals("Dev")){return['current version'] } 
 					else if(environment.equals("Init")){return['current version', 'Promote from Dev'] } 
@@ -28,11 +28,11 @@ pipeline {
 					else {return ['unknown'] }
 					} 
 				fallbackScript('return["error"]')
-			
-			referencedParameter: 'Environment'
+			}
+			referencedParameter('Environment')
 		
-	)
 	}
+    }
 			
 stages{
         stage('Prepare & Checkout') {
