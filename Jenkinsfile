@@ -6,26 +6,13 @@ pipeline {
 	}
 
 
- parameters: [[$class: 'ChoiceParameter', choiceType: 'PT_SINGLE_SELECT',description: 'Please select the environment',name: 'Environment',randomName: 'choice-parameter-1289510349829711', 
-               script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: true, script: 'return[\'error\']'], 
-               script: [classpath: [], sandbox: true, script: '''return[\'\',\'Dev\',\'Int\',\'Stag\']''']]],
-
-              [$class: 'CascadeChoiceParameter',choiceType: 'PT_SINGLE_SELECT',description: 'Please select the version',filterLength: 1,filterable: false,name: 'Version',randomName: 'choice-parameter-1289510362599492',referencedParameters: 'Environment', 
-			  script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: true, script: 'return [\'Script Error\']'], 
-              script: [classpath: [], sandbox: true, 
-             script: '''
-                    if (Environment.equals("Dev")){
-                     return["current version"]} 
-		else if(Environment.equals("Int")){
-                    return["current version", "Promote from Dev"]}
-		else if (Environment.equals("Stag")) {
-                   return["current version", "Promote from Int"]}
-		 else {return ["unknown state"]
-                    }'''
-		      ]
-                ]]]
-
-
+	parameters {
+		choice(
+			name: 'Environment',
+			choices: "Dev\nInit\nPrd",
+			description: 'select the environment' )
+	}
+			
 stages{
         stage('Prepare & Checkout') {
             steps {
