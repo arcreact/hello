@@ -36,7 +36,7 @@ pipeline {
     agent any
     
 }
-
+stages{
         stage('Prepare & Checkout') {
             steps {
                 script {
@@ -64,3 +64,4 @@ pipeline {
             deleteDir()
         }
     }
+}	
