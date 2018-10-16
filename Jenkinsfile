@@ -1,37 +1,46 @@
 pipeline {
-    agent any
-   parameters: [[$class: 'CascadeChoiceParameter', choiceType: 'PT_SINGLE_SELECT', description: '', filterLength: 1, filterable: false, name: 'fileVersion', randomName: 'choice-parameter-3460752251980003', referencedParameters: 'environment,stack', 
-			script: [$class: 'GroovyScript', 
-			fallbackScript: [classpath: [], sandbox: true, script: 'return [\'Something wrong in the groovy script\']'], 
-			script: [classpath: [], sandbox: true, script: '''
-				if(environment.equals(\'Dev\')){
-					return [\'Current\']
-				} else if(environment.equals(\'Sit\')){					
-					return [\'Current\']
-				} else if(environment.equals(\'Int\')){	
-					if(stack.contains(\'Symphony\')){
-						return [\'Current\',\'Previous\',\'Promote from Sit\']
-					}
-					else {
-						return [\'Current\']
-					}				
-					return [\'Current\']
-				}  else if(environment.equals(\'Uat\')){
-					return [\'Current\',\'Previous\',\'Promote from Int\']
-				} else if(environment.equals(\'Pre-prd\')){					
-					return [\'Current\',\'Previous\',\'Promote from Uat\']
-				} else if(environment.equals(\'Prd\')){
-					if(stack.contains(\'Symphony\')){
-						return [\'Current\',\'Previous\',\'Promote from Pre-prd\']
-					}
-					else {			
-						return [\'Current\',\'Previous\',\'Promote from Uat\']
-					}
-				} else{
-					return [\'Current\',\'Previous\']
-				}
-'''
-			]]]
+	agent {label linuxAgent}
+
+	options {
+		buildDiscarder(logRotator)(numToKeepStr:'5'))
+	}
+
+
+ parameters: [[$class: 'ChoiceParameter', 
+               choiceType: 'PT_SINGLE_SELECT', 
+			   description: 'Please select the environment', 
+			   name: 'Environment', 
+			   randomName: 'choice-parameter-1289510349829711', 
+               script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: true, script: 'return[\'error\']'], 
+               script: [classpath: [], sandbox: true, script: '''return[\'\',\'Dev\',\'Int\',\'Stag\']''']]],
+
+              [$class: 'CascadeChoiceParameter', 
+			  choiceType: 'PT_SINGLE_SELECT',
+			  description: 'Please select the version',
+			  filterLength: 1, 
+			  filterable: false, 
+			  name: 'Version', 
+			  randomName: 'choice-parameter-1289510362599492', 
+              referencedParameters: 'Environment', 
+			  script: [$class: 'GroovyScript', fallbackScript: [classpath: [], sandbox: true, script: 'return [\'Script Error\']'], 
+              script: [classpath: [], sandbox: true, 
+             script: 
+                    'if (Environment.equals("Dev"))
+					{
+                     return["current version"]
+                    } 
+					 else if(Environment.equals("Int"))
+					{
+                     return["current version", "Promote from Dev"]
+                    }
+					else if (Environment.equals("Stag")) 
+					{
+                    return["current version", "Promote from Int"]
+                    }
+					 else {return ["unknown state"]
+                    }']
+                ]]]
+
 
 stages{
         stage('Prepare & Checkout') {
