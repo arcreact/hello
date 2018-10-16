@@ -2,7 +2,7 @@ pipeline {
 	agent {label linuxAgent}
 
 	options {
-		buildDiscarder(logRotator)(numToKeepStr:'5'))
+		buildDiscarder(logRotator(numToKeepStr:'5'))
 	}
 
 
