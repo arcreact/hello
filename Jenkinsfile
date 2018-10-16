@@ -11,7 +11,7 @@ pipeline {
                         description('select your environment')
 			choiceType('PT_SINGLE_SELECT')
 			groovyscript {
-				script("return['DEV' , 'Init' ,'Prd']")
+				script("return['Dev','Init','Prd']")
 				fallbackScript('return["error"]')
 			}
 		}
@@ -21,7 +21,7 @@ pipeline {
 			choiceType('PT_SINGLE_SELECT')
 			
 			groovyscript {
-				script ("if (Environment.equals("DEV")){return['current version'] } else if(Environment.equals("Init")){return['current version', 'Promote from Dev'] } else if(Environment.equals("Prd"){return['current version', 'promote from Init'] }") 
+				script ("if (Environment.equals("DEV")){return['current version'] } elseif(Environment.equals("Init")){return['current version', 'Promote from Dev'] } elseif(Environment.equals("Prd"){return['current version', 'promote from Init'] }") 
 				fallbackScript('return["error"]')
 			}
 			referencedParameter('Environment')
