@@ -16,21 +16,15 @@ pipeline {
 			description: 'selct the version',
 			choiceType: 'PT_SINGLE_SELECT',
 			referencedParameter: 'Environment',
-			groovyscript {
+			groovyscript :
 				script {
 					if (Environment.equals("Dev")){
 						return["current version"] }
 						       else if(Environment.equals("Init")){
 							       return["current version", "Promote from Dev"] }
 						       else if(Environment.equals("Prd"){
-							       return["current version","promote from Init"] }
-							       )
-							       			       
-				 }
-			 } 
-						       
-			       
-							       
+							       return["current version","promote from Init"] } }
+							       )			 					       
 				
 		 
 			
