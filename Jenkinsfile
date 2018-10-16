@@ -65,4 +65,4 @@ pipeline {
                  charset: 'UTF-8'
             deleteDir()
         }
-    }}}
+    }
