@@ -37,8 +37,6 @@ pipeline {
     
 }
 
-
-    stages {
         stage('Prepare & Checkout') {
             steps {
                 script {
@@ -55,7 +53,7 @@ pipeline {
                 echo "** version2: ${VERSION} **"
             }
         }
-    } // stages
+
     post {
         always {
             mail to: 'foo@example.com',
