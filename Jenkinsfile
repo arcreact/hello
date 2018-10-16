@@ -8,19 +8,19 @@ pipeline {
 
 	parameters {
 		activeChoiceParam('environment')(
-                        description('select your environment')
-			choiceType('PT_SINGLE_SELECT')
-			groovyScript {
+                        description: 'select your environment'
+			choiceType: 'PT_SINGLE_SELECT'
+			groovyScript:
 				script("return['Dev','Init','Prd']")
 				fallbackScript('return["error"]')
-			}
+			
 		)
 		
 		activeChoiceParam ('version')(
-			description('select the version')
-			choiceType('PT_SINGLE_SELECT')
+			description: 'select the version'
+			choiceType: 'PT_SINGLE_SELECT'
 			
-			groovyScript {
+			groovyScript:
 				script {
 					if (environment.equals("Dev")){return['current version'] } 
 					else if(environment.equals("Init")){return['current version', 'Promote from Dev'] } 
@@ -28,8 +28,8 @@ pipeline {
 					else {return ['unknown'] }
 					} 
 				fallbackScript('return["error"]')
-			}
-			referencedParameter('Environment')
+			
+			referencedParameter: 'Environment'
 		
 	)
 	}
