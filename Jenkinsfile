@@ -6,27 +6,11 @@ pipeline {
 	}
 
 
-	parameters {
-		activeChoiceParam('Environment'){
-                        description('select your environment')
-			choiceType('PT_SINGLE_SELECT')
-			groovyscript {
-				script("return['Dev','Init','Prd']")
-				fallbackScript('return["error"]')
-			}
-		}
-		
-		activeChoiceParam ('version'){
-			description('select the version')
-			choiceType('PT_SINGLE_SELECT')
-			
-			groovyscript {
-				script ("if (Environment.equals("Dev")){return['current version'] } elseif(Environment.equals("Init")){return['current version', 'Promote from Dev'] } elseif(Environment.equals("Prd")){return['current version', 'promote from Init'] } else {return ['unknown'] }") 
-				fallbackScript('return["error"]')
-			}
-			referencedParameter('Environment')
-		
-	}
+def environment
+ 
+def version
+
+    
 			
 stages{
         stage('Prepare & Checkout') {
@@ -39,12 +23,21 @@ stages{
                 }
             }
         }  
-        stage('Build') {
-            steps {
-                // sh "./build.sh"
-                echo "** version2: ${VERSION} **"
-            }
+       
+	stage ('build'){
+        environment = input( id: 'userInput', message: 'Select your choice', parameters: [ [\$class: 'ChoiceParameterDefinition', choices: 'Dev\nInt\nPrd', description: 'Select your environment', name: 'environment'] ])
+        if(environment.equals("Dev")){
+            version = input( id: 'userInput', message: 'Select your choice', parameters: [ [\$class: 'ChoiceParameterDefinition', choices: 'current', description: 'current version build only', name: 'J'] ])
+        }else if(environment.equals("Int"){
+            version = input( id: 'userInput', message: 'Select your choice', parameters: [ [\$class: 'ChoiceParameterDefinition', choices: 'current\npromote from Dev', description: 'choose the requiredversion', name: 'S'] ])
         }
+        else if(environment.equals("Prd"){
+            version = input( id: 'userInput', message: 'Select your choice', parameters: [ [\$class: 'ChoiceParameterDefinition', choices: 'current\npromote from Int', description: 'choose the requiredversion', name: 'W'] ])
+        }
+        else{
+            version = input( id: 'userInput', message: 'Select your choice', parameters: [ [\$class: 'ChoiceParameterDefinition', choices: 'unknown', description: 'no version selected', name: 'X'] ])
+        }
+    }
 }
 
     
