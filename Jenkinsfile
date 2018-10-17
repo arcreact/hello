@@ -7,18 +7,19 @@ pipeline {
 
 
 	parameters {
-		activeChoiceParam('environment'){
+		activeChoiceParam('environment')(
                         description('select your environment')
 			choiceType('RADIO')
 			groovyScript {
 				script("return['Dev','Init','Prd']")
 				fallbackScript('return["error"]')
 			}
-		}
+        )
 		
-		activeChoiceParam ('version'){
+		activeChoiceParam ('version')(
 			description('select the version')
 			choiceType('RADIO')
+            referencedParameter('Environment')
 			
 			groovyScript {
 				script {
@@ -29,9 +30,9 @@ pipeline {
 					} 
 				fallbackScript('return["error"]')
 			}
-			referencedParameter('Environment')
+			
 		
-	}
+        )
     }
 			
 stages{
