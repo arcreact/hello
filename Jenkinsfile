@@ -6,7 +6,7 @@ pipeline {
 	parameters {
 		choice(
 			name: 'Environment',
-			choices: "\nDev\nInit\nPrd"
+			choices: "\nDev\nInit\nPrd",
                         description: 'select your environment' )
 	}
 
