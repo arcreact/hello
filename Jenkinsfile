@@ -6,18 +6,34 @@ pipeline {
 	}
 
 
-   def choice1
-    def choice2
-
-    stage ('Select'){
-        choice1 = input( id: 'userInput', message: 'Select your choice', parameters: [ [ choices: 'aa\nbb', description: '', name: ''] ])
-        if(choice1.equals("aa")){
-            choice2 = input( id: 'userInput', message: 'Select your choice', parameters: [ [ choices: 'yy\nww', description: '', name: ''] ])
-        }else{
-            choice2 = input( id: 'userInput', message: 'Select your choice', parameters: [ [ choices: 'gg\nkk', description: '', name: ''] ])
+	parameters {
+		Choice(
+			name: 'Environment',
+                        description: 'select your environment',
+			choices: '\nDev\nInit\nPrd'	
+       		      )
+	}
+		
+		
+			
+stages{
+        stage('Prepare & Checkout') {
+            steps {
+                script {
+                    if (! env.VERSION) {
+                       VERSION = sh(script: "date", returnStdout: true).trim()
+                    }
+                    echo "** version: ${VERSION} **"
+                }
+            }
+        }  
+        stage('Build') {
+            steps {
+                // sh "./build.sh"
+                echo "** version2: ${VERSION} **"
+            }
         }
-    }
 }
 
     
-	
+}	
