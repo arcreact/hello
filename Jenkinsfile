@@ -21,6 +21,7 @@ pipeline {
 			name: 'version',
 			description: 'select the version',
 			choiceType: 'PT_SINGLE_SELECT',
+			referencedParameter: 'Environment',
 			
 			groovyscript {
 				script {
@@ -31,7 +32,7 @@ pipeline {
 					} 
 				fallbackScript('return["error"]')
 			}
-			referencedParameter: 'Environment'
+			
 		
 	)
     }
