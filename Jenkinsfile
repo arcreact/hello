@@ -12,6 +12,7 @@ pipeline {
 			choices: "\nDev\nInit\nPrd"
                         description: 'select your environment' )
 	}
+}
 		
 		
 			
@@ -35,4 +36,4 @@ stages{
 }
 
     
-}	
+	
